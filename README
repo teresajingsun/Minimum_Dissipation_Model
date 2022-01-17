@@ -1,1 +1,3 @@
-QR
+This file is sourced from /scratch/p302694@peregrine/OpenFoam.
+
+The cases are intend to test QR model and dynamicCurbicRootR, dynamicCubicRootRS, dynamicRDivideQ and dynamicSmagorinsky models in plain channel flow.
