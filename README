@@ -21,9 +21,7 @@ License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Implementation of the dynamic Smagorinsky model with coefficients cD and
-    cI computed as local average of their face values to avoid numerical
-    instabilities.
+    Implementation of the minimum-dissipation model (QR).
     Negative values of the effective viscosity are removed by clipping it to
     zero (nuSgs is clipped to -nu)
 
