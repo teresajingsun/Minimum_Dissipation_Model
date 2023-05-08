@@ -1,6 +1,5 @@
 
-Implementation of the QR, dynamicCurbicRootR, dynamicCubicRootRS, dynamicRDivideQ SGS model
-                     as proposed by Roel Verstappen (2011) for OpenFOAM.
+Implementation of the QR, dynamicCurbicRootR, dynamicCubicRootRS, dynamicRDivideQ SGS model, as proposed by Roel Verstappen (2011) for OpenFOAM.
 
 Copyright Information
     Copyright (C) 1991-2009 OpenCFD Ltd.
@@ -22,11 +21,12 @@ License
 
 Description
     Implementation of the minimum-dissipation model (QR).
-    Negative values of the effective viscosity are removed by clipping it to
-    zero (nuSgs is clipped to -nu)
+    The QR model swithches off in laminar flow. Zero eddy viscosity at a no-slip wall. Negative values of the effective viscosity are removed by clipping it to
+    zero. Backward energy cascade is closed.
 
 Target platform
-    The code is known to work with OpenFOAM v2012.
+    The code is known to work with OpenFOAM/v2006, OpenFOAM/v2012, OpenFOAM/v2106, OpenFOAM/v2206.
+    If the solver couldn't find the QR model, prefix the solver with the preload command.
 
 Author
-   Jing SUN <j.sun@rug.nl>
+    Jing SUN <j.sun@rug.nl>
