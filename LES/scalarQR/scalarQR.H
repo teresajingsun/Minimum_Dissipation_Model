@@ -25,23 +25,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::LESModels::QR
+    Foam::LESModels::scalarQR
 
 Group
     grpLESTurbulence
 
 Description
-    The QR SGS model.
+    The scalarQR SGS model.
 
     Reference:
     \verbatim
-        QR, J. (1963).
+        scalarQR, J. (1963).
         General circulation experiments with the primitive equations: I.
         The basic experiment*.
         Monthly weather review, 91(3), 99-164.
     \endverbatim
 
-    The form of the QR model implemented is obtained from the
+    The form of the scalarQR model implemented is obtained from the
     k-equation model assuming local equilibrium which provides estimates of both
     k and epsilon separate from the sub-grid scale viscosity:
 
@@ -57,7 +57,7 @@ Description
 
     The default model coefficients are
     \verbatim
-        QRCoeffs
+        scalarQRCoeffs
         {
             Ck                  0.094;
             Ce                  1.048;
@@ -68,16 +68,17 @@ See also
     Foam::LESModels::kEqn
 
 SourceFiles
-    QR.C
+    scalarQR.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef QR_H
-#define QR_H
+#ifndef scalarQR_H
+#define scalarQR_H
 
 #include "LESModel.H"
 #include "LESeddyViscosity.H"
-
+#include "gravityMeshObject.H"
+#include "uniformDimensionedFields.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -86,29 +87,44 @@ namespace LESModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class QR Declaration
+                           Class scalarQR Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicTurbulenceModel>              //Template declaration. BasicTurbulenceModel is a generic type within the template parameters enclosed in angle-brackets.   
-class QR                                          //Derived class QR inherits the members of base class. 
+class scalarQR                                          //Derived class scalarQR inherits the members of base class. 
 :
     public LESeddyViscosity<BasicTurbulenceModel> //Base class is LESeddyViscosity with the template parameter <BasicTurbulenceModel>
 {
     // Private Member Functions
 
         //- No copy construct
-        QR(const QR&) = delete;
+        scalarQR(const scalarQR&) = delete;
 
         //- No copy assignment
-        void operator=(const QR&) = delete;
+        void operator=(const scalarQR&) = delete;
 
 
 protected:
 
     // Protected data
 
-        dimensionedScalar Ck_;
+	// - Model coefficient
 
+		//- Empirical model coefficient
+        	dimensionedScalar Ck_;
+
+		//- Thermal expansion coefficient [1/K]
+		dimensionedScalar beta_;
+		//- Reference temperature  [K]
+		dimensionedScalar TRef_;
+		//- Gravitational acceleration  [m/s2]
+		//dimensionedScalar gh_;
+		const dimensionedVector g_;
+
+	//Fields
+
+		//- Gravitational acceleration  [m2/s2]
+		//const uniformDimensionedVectorField& g_;
 
     // Protected Member Functions
 
@@ -120,6 +136,8 @@ protected:
         virtual void correctNut();                                      //void means the function does not need to return a value.
 
 
+
+
 public:
 
     typedef typename BasicTurbulenceModel::alphaField alphaField;
@@ -128,13 +146,13 @@ public:
 
 
     //- Runtime type information
-    TypeName("QR");
+    TypeName("scalarQR");
 
 
     // Constructors
 
         //- Construct from components
-        QR
+        scalarQR
         (
             const alphaField& alpha,
             const rhoField& rho,
@@ -148,7 +166,7 @@ public:
 
 
     //- Destructor
-    virtual ~QR() = default;
+    virtual ~scalarQR() = default;
 
 
     // Member Functions
@@ -157,6 +175,18 @@ public:
         virtual bool read();                              //Function declaration.  type name (argument1, argument2, ...) {statements}
                                                           //Type and parenthesis() are required for declaration of function.  
                                                           //() is what differentiate functions from other kind of declarations and statements
+	/*
+	//- Return the effective diffusivity for k
+        tmp<volScalarField> DkEff() const
+        {
+            return tmp<volScalarField>::New
+            (
+                "DkEff",
+                (this->nut_/sigmak_ + this->nu())
+            );
+        }
+	*/
+
         //- Return SGS kinetic energy
         virtual tmp<volScalarField> k() const
         {
@@ -176,7 +206,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "QR.C"
+    #include "scalarQR.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

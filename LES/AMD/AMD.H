@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,23 +25,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::LESModels::QR
+    Foam::LESModels::AMD
 
 Group
     grpLESTurbulence
 
 Description
-    The QR SGS model.
+    The AMD SGS model.
 
     Reference:
     \verbatim
-        QR, J. (1963).
+        AMD, J. (1963).
         General circulation experiments with the primitive equations: I.
         The basic experiment*.
         Monthly weather review, 91(3), 99-164.
     \endverbatim
 
-    The form of the QR model implemented is obtained from the
+    The form of the AMD model implemented is obtained from the
     k-equation model assuming local equilibrium which provides estimates of both
     k and epsilon separate from the sub-grid scale viscosity:
 
@@ -57,7 +57,7 @@ Description
 
     The default model coefficients are
     \verbatim
-        QRCoeffs
+        AMDCoeffs
         {
             Ck                  0.094;
             Ce                  1.048;
@@ -68,16 +68,16 @@ See also
     Foam::LESModels::kEqn
 
 SourceFiles
-    QR.C
+    AMD.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef QR_H
-#define QR_H
+#ifndef AMD_H
+#define AMD_H
 
 #include "LESModel.H"
 #include "LESeddyViscosity.H"
-
+//#include "cubeRootVolDelta.C"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -86,22 +86,21 @@ namespace LESModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class QR Declaration
+                           Class AMD Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class BasicTurbulenceModel>              //Template declaration. BasicTurbulenceModel is a generic type within the template parameters enclosed in angle-brackets.   
-class QR                                          //Derived class QR inherits the members of base class. 
+template<class BasicTurbulenceModel>
+class AMD
 :
-    public LESeddyViscosity<BasicTurbulenceModel> //Base class is LESeddyViscosity with the template parameter <BasicTurbulenceModel>
+    public LESeddyViscosity<BasicTurbulenceModel>
 {
     // Private Member Functions
 
         //- No copy construct
-        QR(const QR&) = delete;
+        AMD(const AMD&) = delete;
 
         //- No copy assignment
-        void operator=(const QR&) = delete;
-
+        void operator=(const AMD&) = delete;
 
 protected:
 
@@ -109,16 +108,19 @@ protected:
 
         dimensionedScalar Ck_;
 
+        volVectorField filter_;
+
 
     // Protected Member Functions
 
         //- Return SGS kinetic energy
         //  calculated from the given velocity gradient
-        tmp<volScalarField> k(const tmp<volTensorField>& gradU) const;  //To call the template function: funcation_name <type> (parameters);
+        tmp<volScalarField> k(const tmp<volTensorField>& gradU) const;
 
         //- Update the SGS eddy viscosity
-        virtual void correctNut();                                      //void means the function does not need to return a value.
+        virtual void correctNut();
 
+        void calcFilter();
 
 public:
 
@@ -128,13 +130,13 @@ public:
 
 
     //- Runtime type information
-    TypeName("QR");
+    TypeName("AMD");
 
 
     // Constructors
 
         //- Construct from components
-        QR
+        AMD
         (
             const alphaField& alpha,
             const rhoField& rho,
@@ -148,24 +150,21 @@ public:
 
 
     //- Destructor
-    virtual ~QR() = default;
+    virtual ~AMD() = default;
 
-
-    // Member Functions
-    //
         //- Read model coefficients if they have changed
-        virtual bool read();                              //Function declaration.  type name (argument1, argument2, ...) {statements}
-                                                          //Type and parenthesis() are required for declaration of function.  
-                                                          //() is what differentiate functions from other kind of declarations and statements
+        virtual bool read();
+
         //- Return SGS kinetic energy
-        virtual tmp<volScalarField> k() const
+        
+	virtual tmp<volScalarField> k() const
         {
             return k(fvc::grad(this->U_));
         }
 
         //- Correct Eddy-Viscosity and related properties
-        virtual void correct();                          
-};                                                        
+        virtual void correct();
+};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -176,7 +175,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "QR.C"
+    #include "AMD.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

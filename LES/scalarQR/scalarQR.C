@@ -26,15 +26,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "QR.H"		
+#include "scalarQR.H"		
 #include "fvOptions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-/*
-namenspace groups named entities that would otherwise have a global scope into narrow scopes. 
-LESModels is a normal variable declared within a namespace Foam. Namespce can extend across different files of source code.
-To access the variable namespace LESModels from outside Foam they should be qualified like: Foam::namespace LESModels
-*/
 namespace Foam		
 {			
 namespace LESModels	
@@ -42,70 +37,43 @@ namespace LESModels
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-/*
-template <class identifier> function_declaration | template <typename identifier> function_declaration
-BasicTurbuleceModel is defined as a generic type, a template parameter
-Calling function template: function_name <type> (function arguements)
-*/
 template<class BasicTurbulenceModel>		
-tmp<volScalarField> QR<BasicTurbulenceModel>::k 
+tmp<volScalarField> scalarQR<BasicTurbulenceModel>::k
 (			
     const tmp<volTensorField>& gradU	
 ) const
 {                                             
-    volSymmTensorField  D(symm(gradU));       
-/*
-Dimension of velocity M^0LT^(-1), dimension of gradient M^0LT^0
-Dimension of velocity gradient, i.e.,velocity/distance, equal to M^0L^0T(-1)
-In OpenFOAM physical dimensions with respect to the SI unit system: SI [kg, m, s, K, mol, A, cd]
-q is the second invariant of velocity gradient. Dimension of q is (velocity gradient)^2, i.e., M^0L^0T^(-2)    
-r is the third invariant.  Dimension of r (velocity gradient)^3, i.e., M^0L^0T^(-3)
-*/
-    volScalarField 	r(max(-det(D),dimensionedScalar("r",dimensionSet(0, 0, -3, 0, 0, 0, 0), 0.0)));
+    volSymmTensorField  D(symm(gradU()));       
+    const volVectorField& U = this->U_;
+    const auto& rhok = U.mesh().lookupObject<volScalarField>("rhok");
+    volScalarField	buoyancy(1.0/4.0 * I & g_ & gradU & fvc::grad(rhok));
+
+    volScalarField 	r(-det(D));
     volScalarField      q(max((1.0/2.0)*dev(D) && D, dimensionedScalar("q",dimensionSet(0, 0, -2, 0, 0, 0, 0), 1e-15)));	
-    //Setting the dimension of q1 as same as q, to compare q and q1 in If statement. But can't solve the case 0 < q << 1 that eddy viscosity tends to infinite. 
-//    volScalarField	q1(0.0*dev(D) && D);
-//
-//    if ( q <= q1 )              //lhs and rhs should be the same type
-//    {
-//    return tmp<volScalarField>
-//	(
-//	new	volScalarField		
-//	(
-//		IOobject
-//		(
-//			IOobject::groupName("k",this->alphaRhoPhi_.group()),
-//			this->runTime_.timeName(),
-//			this->mesh_
-//		),
-//		q1		// k=0 when q<=0; Potential issue would be that the dimensions of q1 and k are not match                              
-//	)
-//                );
-// 
-//    }	
-     return tmp<volScalarField>
-      (
+    volScalarField	rBuoyancy(max(r + buoyancy, dimensionedScalar("buoyancy", dimensionSet(0, 0, -3, 0, 0, 0, 0), 0.0))); 
+    
+    return tmp<volScalarField>
+    (
 	new volScalarField	
 	(
 		IOobject
 		(
-			IOobject::groupName("k", this->alphaRhoPhi_.group()),//k is the name of file containing the dictionary
-			this->runTime_.timeName(),		//tells OpenFOAM to save the file in a dictionary called as the current time	
-			this->mesh_				//pointer_name -> variable_name(a sturcture or union)
-								//mesh is the objectRegistry
-		),						//Data member of class, both static and non-static, are named like ordinary variable,
-		sqr(this->delta()*mag(r)/q)					//but with a trailing underscore, like: mesh_					
+			IOobject::groupName("k", this->alphaRhoPhi_.group()),
+			this->runTime_.timeName(),			
+			this->mesh_				
+		),						
+		sqr(this->delta()*mag(rBuoyancy)/q)								
 	)
-      );	
+    );	
 }   //end const           	
                 	
 
 template<class BasicTurbulenceModel>
-void QR<BasicTurbulenceModel>::correctNut()
+void scalarQR<BasicTurbulenceModel>::correctNut()
 {               	
     volScalarField k(this->k(fvc::grad(this->U_)));
 
-    this->nut_ = Ck_*this->delta()*sqrt(k);		//correctNut is eddy viscosity. QR's Ck is equal to Ck^2 in Smagorinsky.C
+    this->nut_ = Ck_*this->delta()*sqrt(k);		//correctNut is eddy viscosity. scalarQR's Ck is equal to Ck^2 in Smagorinsky.C
     this->nut_.correctBoundaryConditions();
     fv::options::New(this->mesh_).correct(this->nut_);
 
@@ -116,15 +84,15 @@ void QR<BasicTurbulenceModel>::correctNut()
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 /*
-The template parameter of QR class is BasicTurbulenceModel. 
+The template parameter of scalarQR class is BasicTurbulenceModel. 
 The template parameter of LESeddyViscosity class is BasicTurbulenceModel.
-QR inherits from LESeddyViscosity base class.
+scalarQR inherits from LESeddyViscosity base class.
 The parameterized constructor of the base class can only be called using initializer list, here is an exampel
     B::B(type x):A(x){}   where the derived class is B, the base class is A.   
 */
 
 template<class BasicTurbulenceModel>
-QR<BasicTurbulenceModel>::QR			//Constructor function has no return values neither constructor prototype declaration within the class nor constructor definition.
+scalarQR<BasicTurbulenceModel>::scalarQR			//Constructor function has no return values neither constructor prototype declaration within the class nor constructor definition.
 (						//Constructor simply initialize the object
     const alphaField& alpha,
     const rhoField& rho,
@@ -148,15 +116,60 @@ QR<BasicTurbulenceModel>::QR			//Constructor function has no return values neith
         propertiesName
     ),
 
-    Ck_                                        //Initializing the member data/variable Ck_ of QR class in Initializer list
+    //QR's Ck is comparable to Ck^2 in Smagorinsky.C
+    Ck_                                       
     (
         dimensioned<scalar>::getOrAddToDict
         (
             "Ck",
             this->coeffDict_,
-            0.094
+            0.024
+        )
+    ),
+    g_
+    (
+        "g",
+        dimLength/sqr(dimTime),
+        meshObjects::gravity::New(this->mesh_.time()).value()
+    )
+
+/*
+    gh_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "gh",
+            this->coeffDict_,
+            dimLength/sqr(dimTime),
+            9.81
         )
     )
+
+    beta_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "beta",
+            this->coeffDict_,
+            dimless/dimTemperature,
+            3.3e-03
+        )
+    ),
+
+    TRef_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "TRef",
+            this->coeffDict_,
+            dimTemperature,
+	    300
+        )
+    ),
+    g_(meshObjects::gravity::New(this->mesh_.time()))
+
+*/
+
 {
     if (type == typeName)
     {
@@ -168,11 +181,14 @@ QR<BasicTurbulenceModel>::QR			//Constructor function has no return values neith
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class BasicTurbulenceModel>
-bool QR<BasicTurbulenceModel>::read()
+bool scalarQR<BasicTurbulenceModel>::read()
 {
     if (LESeddyViscosity<BasicTurbulenceModel>::read())
     {
         Ck_.readIfPresent(this->coeffDict());
+	//beta_.readIfPresent(this->coeffDict());
+	//TRef_.readIfPresent(this->coeffDict());
+	//gh_.readIfPresent(this->coeffDict());
 
         return true;
     }
@@ -182,7 +198,7 @@ bool QR<BasicTurbulenceModel>::read()
 
 
 template<class BasicTurbulenceModel>
-void QR<BasicTurbulenceModel>::correct()
+void scalarQR<BasicTurbulenceModel>::correct()
 {
     LESeddyViscosity<BasicTurbulenceModel>::correct();
     correctNut();
