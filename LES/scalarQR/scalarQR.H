@@ -90,10 +90,10 @@ namespace LESModels
                            Class scalarQR Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class BasicTurbulenceModel>              //Template declaration. BasicTurbulenceModel is a generic type within the template parameters enclosed in angle-brackets.   
-class scalarQR                                          //Derived class scalarQR inherits the members of base class. 
+template<class BasicTurbulenceModel>              
+class scalarQR                                     
 :
-    public LESeddyViscosity<BasicTurbulenceModel> //Base class is LESeddyViscosity with the template parameter <BasicTurbulenceModel>
+    public LESeddyViscosity<BasicTurbulenceModel> 
 {
     // Private Member Functions
 
@@ -130,10 +130,10 @@ protected:
 
         //- Return SGS kinetic energy
         //  calculated from the given velocity gradient
-        tmp<volScalarField> k(const tmp<volTensorField>& gradU) const;  //To call the template function: funcation_name <type> (parameters);
+        tmp<volScalarField> k(const tmp<volTensorField>& gradU) const;  
 
         //- Update the SGS eddy viscosity
-        virtual void correctNut();                                      //void means the function does not need to return a value.
+        virtual void correctNut();                                      
 
 
 
@@ -172,9 +172,9 @@ public:
     // Member Functions
     //
         //- Read model coefficients if they have changed
-        virtual bool read();                              //Function declaration.  type name (argument1, argument2, ...) {statements}
-                                                          //Type and parenthesis() are required for declaration of function.  
-                                                          //() is what differentiate functions from other kind of declarations and statements
+        virtual bool read();                              
+                                                            
+                                                          
 	/*
 	//- Return the effective diffusivity for k
         tmp<volScalarField> DkEff() const

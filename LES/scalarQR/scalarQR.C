@@ -83,17 +83,9 @@ void scalarQR<BasicTurbulenceModel>::correctNut()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-/*
-The template parameter of scalarQR class is BasicTurbulenceModel. 
-The template parameter of LESeddyViscosity class is BasicTurbulenceModel.
-scalarQR inherits from LESeddyViscosity base class.
-The parameterized constructor of the base class can only be called using initializer list, here is an exampel
-    B::B(type x):A(x){}   where the derived class is B, the base class is A.   
-*/
-
 template<class BasicTurbulenceModel>
-scalarQR<BasicTurbulenceModel>::scalarQR			//Constructor function has no return values neither constructor prototype declaration within the class nor constructor definition.
-(						//Constructor simply initialize the object
+scalarQR<BasicTurbulenceModel>::scalarQR			
+(						
     const alphaField& alpha,
     const rhoField& rho,
     const volVectorField& U,
@@ -104,7 +96,7 @@ scalarQR<BasicTurbulenceModel>::scalarQR			//Constructor function has no return 
     const word& type
 )
 :
-    LESeddyViscosity<BasicTurbulenceModel>      //calling the parameterized constructor of Base class LESeddyViscosisty using Initializer list
+    LESeddyViscosity<BasicTurbulenceModel>      
     (
         type,
         alpha,
@@ -116,7 +108,7 @@ scalarQR<BasicTurbulenceModel>::scalarQR			//Constructor function has no return 
         propertiesName
     ),
 
-    //QR's Ck is comparable to Ck^2 in Smagorinsky.C
+    //scalarQR's Ck is comparable to Ck^2 in Smagorinsky.C
     Ck_                                       
     (
         dimensioned<scalar>::getOrAddToDict
