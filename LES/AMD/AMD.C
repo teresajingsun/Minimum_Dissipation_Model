@@ -40,14 +40,14 @@ namespace LESModels
 template<class BasicTurbulenceModel>
 void AMD<BasicTurbulenceModel>::calcFilter()
 	{
-	    Info << "calculate filter" <<endl;
+		//Foam::Sout << "Calculating filter" << std::endl;
+		Info << "calculate filter" <<endl;
 	    const faceList & ff = this->mesh_.faces();
 
 	    const pointField & pp = this->mesh_.points();
 
 	  forAll ( this->mesh_.C(), celli)
 	  {
-
 	    const cell & cc = this->mesh_.cells()[celli];
 
 	    labelList pLabels(cc.labels(ff));
@@ -55,14 +55,14 @@ void AMD<BasicTurbulenceModel>::calcFilter()
 	    pointField pLocal(pLabels.size(), vector::zero);
 
 	    forAll (pLabels, pointi)
-
-	    pLocal[pointi] = pp[pLabels[pointi]];
+	        pLocal[pointi] = pp[pLabels[pointi]];
 
 	    filter_[celli].x() = Foam::max(pLocal & vector(1,0,0)) - Foam::min(pLocal & vector(1,0,0));
 	    filter_[celli].y() = Foam::max(pLocal & vector(0,1,0)) - Foam::min(pLocal & vector(0,1,0));
 	    filter_[celli].z() = Foam::max(pLocal & vector(0,0,1)) - Foam::min(pLocal & vector(0,0,1));
 	 // And similar for yDim and zDim
-	 }
+	    Info << filter_[celli].x() << " " << filter_[celli].y() << " " << filter_[celli].z() << endl;
+	  }
 	}	
 
 template<class BasicTurbulenceModel>
@@ -96,13 +96,40 @@ void AMD<BasicTurbulenceModel>::correctNut()
     volScalarField xDim=filter_.component(vector::X);
     volScalarField yDim=filter_.component(vector::Y);
     volScalarField zDim=filter_.component(vector::Z);
+    //First row
     volScalarField gradUxx = gradU.component(tensor::XX);
-    this->nut_ = (-0.0208)*(((sqr(xDim))*(sqr(gradU.component(tensor::XX))*(gradU.component(tensor::XX)) + (gradU.component(tensor::XX))*(gradU.component(tensor::YX))*((gradU.component(tensor::YX))+(gradU.component(tensor::XY))) + (gradU.component(tensor::XX))*(gradU.component(tensor::ZX))*((gradU.component(tensor::ZX))+(gradU.component(tensor::XZ))) + (gradU.component(tensor::YX))*(gradU.component(tensor::YX))*(gradU.component(tensor::YY)) + (gradU.component(tensor::YX))*(gradU.component(tensor::ZX))*((gradU.component(tensor::YZ))+(gradU.component(tensor::ZY))) + (gradU.component(tensor::ZX))*(gradU.component(tensor::ZX))*(gradU.component(tensor::ZZ))))+((sqr(yDim))*(sqr(gradU.component(tensor::XY))*(gradU.component(tensor::XX)) + (gradU.component(tensor::XY))*(gradU.component(tensor::YY))*((gradU.component(tensor::YX))+(gradU.component(tensor::XY))) + (gradU.component(tensor::XY))*(gradU.component(tensor::ZY))*((gradU.component(tensor::ZX))+(gradU.component(tensor::XZ))) + (gradU.component(tensor::YY))*(gradU.component(tensor::YY))*(gradU.component(tensor::YY)) + (gradU.component(tensor::YY))*(gradU.component(tensor::ZY))*((gradU.component(tensor::YZ))+(gradU.component(tensor::ZY))) + (gradU.component(tensor::ZY))*(gradU.component(tensor::ZY))*(gradU.component(tensor::ZZ))))+((sqr(zDim))*(sqr(gradU.component(tensor::XZ))*(gradU.component(tensor::XX)) + (gradU.component(tensor::XZ))*(gradU.component(tensor::YZ))*((gradU.component(tensor::YX))+(gradU.component(tensor::XY))) + (gradU.component(tensor::XZ))*(gradU.component(tensor::ZZ))*((gradU.component(tensor::ZX))+(gradU.component(tensor::XZ))) + (gradU.component(tensor::YZ))*(gradU.component(tensor::YZ))*(gradU.component(tensor::YY)) + (gradU.component(tensor::YZ))*(gradU.component(tensor::ZZ))*((gradU.component(tensor::YZ))+(gradU.component(tensor::ZY))) + (gradU.component(tensor::ZZ))*(gradU.component(tensor::ZZ))*(gradU.component(tensor::ZZ)))))/(sqr(gradU.component(tensor::XX)) + sqr(gradU.component(tensor::YX)) + sqr(gradU.component(tensor::ZX)) + sqr(gradU.component(tensor::XY)) + sqr(gradU.component(tensor::YY)) + sqr(gradU.component(tensor::ZY)) + sqr(gradU.component(tensor::XZ)) + sqr(gradU.component(tensor::YZ)) + sqr(gradU.component(tensor::ZZ)));
+    volScalarField gradUxy = gradU.component(tensor::XY);
+    volScalarField gradUxz = gradU.component(tensor::XZ);
 
-    this->nut_ = (this->nut_ + mag(this->nut_))*0.5;
+    //Second row
+    volScalarField gradUyx = gradU.component(tensor::YX);
+    volScalarField gradUyy = gradU.component(tensor::YY);
+    volScalarField gradUyz = gradU.component(tensor::YZ);
+
+    //Third row
+    volScalarField gradUzx = gradU.component(tensor::ZX);
+    volScalarField gradUzy = gradU.component(tensor::ZY);
+    volScalarField gradUzz = gradU.component(tensor::ZZ);
+
+    volScalarField numerator_xx = sqr(xDim) * gradUxx * ( gradUxx*gradUxx + gradUyx*gradUxy + gradUzx*gradUxz);
+    volScalarField numerator_xy = sqr(xDim) * gradUyx * ( gradUxx*gradUyx + gradUyx*gradUyy + gradUzx*gradUyz);
+    volScalarField numerator_xz = sqr(xDim) * gradUzx * ( gradUxx*gradUzx + gradUyz*gradUzy + gradUzx*gradUzz);
+
+    volScalarField numerator_yx = sqr(yDim) * gradUxy * ( gradUxy*gradUxx + gradUyy*gradUxy + gradUzy*gradUxz);
+    volScalarField numerator_yy = sqr(yDim) * gradUyy * ( gradUxy*gradUyx + gradUyy*gradUyy + gradUzy*gradUyz);
+    volScalarField numerator_yz = sqr(yDim) * gradUzy * ( gradUxy*gradUzx + gradUyy*gradUzy + gradUzy*gradUzz);
+
+    volScalarField numerator_zx = sqr(zDim) * gradUxz * ( gradUxz*gradUxx + gradUyz*gradUxy + gradUzz*gradUxz);
+    volScalarField numerator_zy = sqr(zDim) * gradUyz * ( gradUxz*gradUyx + gradUyz*gradUyy + gradUzz*gradUyz);
+    volScalarField numerator_zz = sqr(zDim) * gradUzz * ( gradUxz*gradUzx + gradUyz*gradUzy + gradUzz*gradUzz);
+
+
+    this->nut_ = max(- Ck_ * (numerator_xx + numerator_xy + numerator_xz +
+			      numerator_yx + numerator_yy + numerator_yz +
+			      numerator_zx + numerator_zy + numerator_zz) / (gradU && gradU),
+		    dimensionedScalar("nut", dimensionSet(0, 2, -1, 0, 0, 0, 0), 0.0));
     this->nut_.correctBoundaryConditions();
     fv::options::New(this->mesh_).correct(this->nut_);
-
     BasicTurbulenceModel::correctNut();
 }
 
@@ -159,8 +186,10 @@ AMD<BasicTurbulenceModel>::AMD
      )
 
 {
+    Info << "AMD Constructor" << endl;
     if (type == typeName)
     {
+	Info << "after typename check" << endl;
 	calcFilter();
         this->printCoeffs(type);
     }
