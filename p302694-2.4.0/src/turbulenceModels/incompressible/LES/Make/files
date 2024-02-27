@@ -1,0 +1,2 @@
+QR/QR.C
+LIB = $(FOAM_USER_LIBBIN)/libMyIncompressibleLESModels
