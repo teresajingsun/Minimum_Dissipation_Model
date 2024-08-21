@@ -1,11 +1,25 @@
 
-Implementation of the QR, dynamicCurbicRootR, dynamicCubicRootRS, dynamicRDivideQ SGS model, as proposed by Roel Verstappen (2011) for OpenFOAM.
+#Description
+	Implementation of the Minimum-Dissipation Models in OpenFOAM.com
 
-Copyright Information
+#References
+References for the QR, dynamicCubicRootR, dynamicCubicRootRS, and dynamicRDivideQ SGS models:
+	[1] Verstappen, R. "When Does Eddy Viscosity Damp Subfilter Scales Sufficiently?" Journal of Scientific Computing, 49, 94–110 (2011). https://doi.org/10.1007/s10915-011-9504-4
+	[2] Sun J, Verstappen R. A Numerical Study of the Minimum-Dissipation Model for Large-Eddy Simulation in OpenFOAM [Internet]. Computational Fluid Dynamics - Analysis, Simulations, and Applications [Working Title]. IntechOpen; 2024. Available from: http://dx.doi.org/10.5772/intechopen.1005638
+
+Reference for the AMD model:
+	[1] Rozema, W., Verstappen, R.W.C.P., Veldman, A.E.P. et al. Low-Dissipation Simulation Methods and Models for Turbulent Subsonic Flow. Arch Computat Methods Eng 27, 299–330 (2020). https://doi.org/10.1007/s11831-018-09307-7
+
+Reference for the scalarQR and other models:
+	[1] In preparation
+
+
+
+#Copyright Information
     Copyright (C) 1991-2009 OpenCFD Ltd.
     Copyright (C) 2010-2021 Jing SUN
 
-License
+#License
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -19,14 +33,91 @@ License
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    Implementation of the minimum-dissipation model (QR).
-    The QR model swithches off in laminar flow. Zero eddy viscosity at a no-slip wall. Negative values of the effective viscosity are removed by clipping it to
-    zero. Backward energy cascade is closed.
 
-Target platform
+#Target platform
     The code is known to work with OpenFOAM/v2006, OpenFOAM/v2012, OpenFOAM/v2106, OpenFOAM/v2206.
-    If the solver couldn't find the QR model, prefix the solver with the preload command.
+    If the solver couldn't find the QR model, prefix the solver with the preload command. The preload command for the pimpleFoam solver in v2206 version is as following:
+	LD_PRELOAD="$HOME/OpenFOAM/OpenFOAM-v2206/platforms/linux64GccDPInt32Opt/lib/libcompressibleTurbulenceModels.so $HOME/OpenFOAM/OpenFOAM-v2206/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so  $HOME/OpenFOAM/OpenFOAM-v2206/platforms/linux64GccDPInt32Opt/lib/libturbulenceModelSchemes.so $HOME/OpenFOAM/OpenFOAM-v2206/platforms/linux64GccDPInt32Opt/lib/libturbulenceModels.so" pimpleFoam
+    The path $HOME/OpenFOAM/OpenFOAM-v2206/ is where you installed the OpenFOAM.
 
-Author
-    Jing SUN <j.sun@rug.nl>
+#Authors
+    Jing SUN <j.sun@rug.nl> Computational and Numerical Mathematics — Bernoulli Institute, Faculty of Science and Engineering, University of Groningen, Nijenborgh 9, 9747 AG Groningen, The Netherlands
+
+#Usage
+    Make sure that OpenFOAM v2206 is loaded into your environment. (The implementations in OpenFOAM v2006, v2012, and v2106 are the same as in OpenFOAM v2206.)
+
+As the Turbulence model classes are templated in OpenFOAM v2206, one has to copy the entire Turbulence model directory into the user directory rather than only coping certain existing models as for previous version, such as OpenFOAM 2.3.0. So some preparatory work is needed as below:
+	of+ 
+	mkdir -p $FOAM_RUN // make sure having user and run directory
+	foam
+	cp -r --parents src/TurbulenceModels $WM_PROJECT_USER_DIR
+	cd $WM_PROJECT_USER_DIR/src/TurbulenceModels
+
+Find all the Make directories, change the location of compiled files to relevant user directory, and compile:
+	find . -name Make
+	sed -i s/FOAM_LIBBIN/FOAM_USER_LIBBIN/g ./*/Make/files
+	./Allwmake
+
+Make sure the following three new shared-object files in $WM_PROJECT_USER_DIR/platforms/linux64GccDPInt32Opt/lib:
+	libcompressibleTurbulenceModels.so
+	libincompressibleTurbulenceModels.so
+	libturbulenceModels.so
+
+Copy the wanted SGS model, for example QR model, into the LES directory and conduct all necessary process to compile:
+	cd turbulenceModels/LES
+	cp -r QR .
+
+Then open turbulentTransportModels.C:
+	cd $WM_PROJECT_USER_DIR/src/TurbulenceModels
+	vim incompressible/turbulentTransportModels/turbulentTransportModels.C
+
+add the following lines:
+	#include "QR.H"
+	makeLESModel(QR);
+
+under the lines for Smagorinsky model:
+	#include "Smagorinsky.H"
+	makeLESModel(Smagorinsky);
+
+save and close the file, then update lnInclude directory and compile:
+	wmakeLnInclude ../../../turbulenceModels
+	./../../../Allwmake
+
+Then update turbulentTransportModels.C and compile:
+	cd $WM_PROJECT_USER_DIR/src/TurbulenceModels
+	touch incompressible/turbulentTransportModels/turbulentTransportModels.C
+	./Allwmake
+
+
+#Test cases
+     All test cases can be found in the "cases" directory, including a channel flow, periodic hills, a circular cylinder and a wind turbine.
+
+#Using minimunm-dissipation models, for instance the QR model, in your own OpenFOAM cases
+    In the "constant/turbulentProperties" file, set the following:
+	LES
+	{
+	    LESModel        QR;
+
+	    QRCoeffs
+	    {
+		Ck          0.024;
+	    }
+
+	    turbulence      on;
+	    printCoeffs     on;
+	    delta           cubeRootVol;
+	    cubeRootVolCoeffs
+	    {
+		deltaCoeff      1;
+	    }
+	}
+
+#Contact & support
+For bug reports or support, feel free to contact Jing SUN at jingsun94@outlook.com.
+
+#Disclaimer
+LESModel is provided by the copyright holders and contributors "as-is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the copyright owner or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
+
+
+
+
