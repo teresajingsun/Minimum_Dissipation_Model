@@ -1,1 +1,0 @@
-../laminar/generalizedNewtonian/generalizedNewtonian.H

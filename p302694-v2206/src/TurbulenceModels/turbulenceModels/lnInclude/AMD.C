@@ -1,1 +1,0 @@
-../LES/AMD/AMD.C

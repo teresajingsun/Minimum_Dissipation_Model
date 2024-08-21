@@ -1,1 +1,0 @@
-../RAS/kOmegaSSTSato/kOmegaSSTSato.H

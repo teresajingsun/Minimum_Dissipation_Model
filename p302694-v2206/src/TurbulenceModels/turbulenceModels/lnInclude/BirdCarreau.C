@@ -1,1 +1,0 @@
-../laminar/generalizedNewtonian/generalizedNewtonianViscosityModels/BirdCarreau/BirdCarreau.C
