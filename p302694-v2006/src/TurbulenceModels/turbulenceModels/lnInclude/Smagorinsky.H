@@ -1,1 +1,0 @@
-../LES/Smagorinsky/Smagorinsky.H

@@ -1,1 +1,0 @@
-../turbulentFluidThermoModels/derivedFvPatchFields/outletMappedUniformInletHeatAddition/outletMappedUniformInletHeatAdditionFvPatchField.H

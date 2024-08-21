@@ -1,1 +1,0 @@
-../LES/dynamicCubicRootR/dynamicCubicRootR.C

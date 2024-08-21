@@ -1,2 +1,0 @@
-BCs = turbulentTransportModels/RAS/derivedFvPatchFields
-LIB = $(FOAM_USER_LIBBIN)/libincompressibleTurbulenceModels

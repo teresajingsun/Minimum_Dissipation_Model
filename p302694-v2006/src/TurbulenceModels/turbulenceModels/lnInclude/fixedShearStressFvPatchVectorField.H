@@ -1,1 +1,0 @@
-../derivedFvPatchFields/fixedShearStress/fixedShearStressFvPatchVectorField.H

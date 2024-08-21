@@ -1,1 +1,0 @@
-../turbulentFluidThermoModels/derivedFvPatchFields/thermalBaffle1D/thermalBaffle1DFvPatchScalarFields.C

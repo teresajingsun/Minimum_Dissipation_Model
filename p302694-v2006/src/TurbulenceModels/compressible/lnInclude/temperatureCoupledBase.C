@@ -1,1 +1,0 @@
-../turbulentFluidThermoModels/derivedFvPatchFields/temperatureCoupledBase/temperatureCoupledBase.C

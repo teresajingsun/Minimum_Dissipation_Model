@@ -1,1 +1,0 @@
-../DES/kOmegaSSTDDES/kOmegaSSTDDES.C

@@ -1,1 +1,0 @@
-../RAS/derivedFvPatchFields/RASBoundaryConditionsDoc.H

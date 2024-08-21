@@ -1,1 +1,0 @@
-../turbulentFluidThermoModels/derivedFvPatchFields/externalWallHeatFluxTemperature/externalWallHeatFluxTemperatureFvPatchScalarField.H
