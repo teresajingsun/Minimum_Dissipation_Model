@@ -44,30 +44,29 @@ Reference for the scalarQR and other models:
     Jing SUN <j.sun@rug.nl> Computational and Numerical Mathematics — Bernoulli Institute, Faculty of Science and Engineering, University of Groningen, Nijenborgh 9, 9747 AG Groningen, The Netherlands
 
 #Usage
-    Make sure that OpenFOAM v2206 is loaded into your environment. (The implementations in OpenFOAM v2006, v2012, and v2106 are the same as in OpenFOAM v2206.)
+    Make sure that OpenFOAM v2206 is loaded into your environment. (The implementations in OpenFOAM v2006, v2012, and v2106 are the same as those in OpenFOAM v2206.)
 
-As the Turbulence model classes are templated in OpenFOAM v2206, one has to copy the entire Turbulence model directory into the user directory rather than only coping certain existing models as for previous version, such as OpenFOAM 2.3.0. So some preparatory work is needed as below:
-	of+ 
-	mkdir -p $FOAM_RUN // make sure having user and run directory
+Since the turbulence model classes are templated in OpenFOAM v2206, you must copy the entire turbulence model directory into the user directory, rather than only copying specific existing models as in previous versions, such as OpenFOAM 2.3.0. Therefore, some preparatory work is needed, as outlined below:
+	mkdir -p $FOAM_RUN // Ensure that you have both a user directory and a run directory.
 	foam
 	cp -r --parents src/TurbulenceModels $WM_PROJECT_USER_DIR
 	cd $WM_PROJECT_USER_DIR/src/TurbulenceModels
 
-Find all the Make directories, change the location of compiled files to relevant user directory, and compile:
+Locate all the Make directories, change the location of compiled files to the relevant user directory, and then compile the files.
 	find . -name Make
 	sed -i s/FOAM_LIBBIN/FOAM_USER_LIBBIN/g ./*/Make/files
 	./Allwmake
 
-Make sure the following three new shared-object files in $WM_PROJECT_USER_DIR/platforms/linux64GccDPInt32Opt/lib:
+Ensure that the following three new shared-object files are located in $WM_PROJECT_USER_DIR/platforms/linux64GccDPInt32Opt/lib:
 	libcompressibleTurbulenceModels.so
 	libincompressibleTurbulenceModels.so
 	libturbulenceModels.so
 
-Copy the wanted SGS model, for example QR model, into the LES directory and conduct all necessary process to compile:
+Copy the desired SGS model, such as the QR model, into the LES directory and complete all necessary processes for compilation:
 	cd turbulenceModels/LES
 	cp -r QR .
 
-Then open turbulentTransportModels.C:
+Then open the file turbulentTransportModels.C:
 	cd $WM_PROJECT_USER_DIR/src/TurbulenceModels
 	vim incompressible/turbulentTransportModels/turbulentTransportModels.C
 
@@ -75,11 +74,11 @@ add the following lines:
 	#include "QR.H"
 	makeLESModel(QR);
 
-under the lines for Smagorinsky model:
+under the lines for the Smagorinsky model:
 	#include "Smagorinsky.H"
 	makeLESModel(Smagorinsky);
 
-save and close the file, then update lnInclude directory and compile:
+Save and close the file, then update the lnInclude directory and compile:
 	wmakeLnInclude ../../../turbulenceModels
 	./../../../Allwmake
 
@@ -90,9 +89,9 @@ Then update turbulentTransportModels.C and compile:
 
 
 #Test cases
-     All test cases can be found in the "cases" directory, including a channel flow, periodic hills, a circular cylinder and a wind turbine.
+     All test cases can be found in the "cases" directory, including a channel flow, periodic hills, a circular cylinder, and a wind turbine.
 
-#Using minimunm-dissipation models, for instance the QR model, in your own OpenFOAM cases
+#Using minimum-dissipation models, for instance, the QR model, in your own OpenFOAM cases
     In the "constant/turbulentProperties" file, set the following:
 	LES
 	{
