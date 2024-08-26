@@ -1,0 +1,30 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+./Allrun.pre
+
+runApplication decomposePar -cellDist
+runParallel $(getApplication)
+
+#LD_PRELOAD="$HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libcompressibleTurbulenceModels.so $HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so  $HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libturbulenceModelSchemes.so $HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libturbulenceModels.so" srun pimpleFoam -parallel >& log.pimpleFoam
+
+runApplication reconstructPar
+
+
+foamLog log.pimpleFoam
+#foamLog log.RKSymFoam >& log.logsRKSYmFoam
+
+runApplication channelBudgets -latestTime
+
+runApplication postChannel -latestTime
+
+if [ -d graphs/*/nut.xy ]
+then
+	printf "\n Nut is sampled, delete the processors \n"
+	rm -r processor*
+else
+	printf "\n No sample of Nut, do not delete the processors \n"
+fi
+#------------------------------------------------------------------------------

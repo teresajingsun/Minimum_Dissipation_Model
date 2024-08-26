@@ -1,0 +1,77 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(p|pCorr)"
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-06;
+        relTol          0.001;
+        nPreSweeps      0;
+        nPostSweeps     2;
+        cacheAgglomeration true;
+        nCellsInCoarsestLevel 1000;
+        agglomerator    faceAreaPair;
+        mergeLevels     1;
+    }
+
+    "(p|pCorr)Final"
+    {
+        $p;
+        tolerance       1e-06;
+        relTol          0;
+    }
+
+
+    "(U|k)"
+    {
+        solver          PBiCG;
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0.1;
+    }
+
+
+    "(U|k)Final"
+    {
+        $U;
+        relTol          0;
+    }
+}
+
+PIMPLE
+{
+    nOuterCorrectors 2;
+    nCorrectors     4;
+    nNonOrthogonalCorrectors 0;
+    pRefCell        1001;
+    pRefValue       0;
+}
+
+// Read by RKSymFoam
+RungeKutta
+{
+    scheme          CrankNicolson;
+    nOuter          2;
+    nInner          4;
+    pnPredCoef      1;
+    pRefCell        0;
+    pRefValue       0;
+}
+// ************************************************************************* //

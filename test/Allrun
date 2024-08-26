@@ -1,0 +1,13 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+./Allrun.pre
+
+runApplication $(getApplication)
+#LD_PRELOAD="$HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libcompressibleTurbulenceModels.so $HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so  $HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libturbulenceModelSchemes.so $HOME/OpenFOAM/p302694-v2206/platforms/linux64GccDPInt32Opt/lib/libturbulenceModels.so"  pimpleFoam >& log.pimpleFoam
+
+runApplication postChannel -latestTime
+
+#------------------------------------------------------------------------------
